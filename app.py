@@ -27,7 +27,7 @@ def download_dataset():
         response = requests.get(DATASET_URL)
         with zipfile.ZipFile(BytesIO(response.content)) as zip_ref:
             zip_ref.extractall(DATA_DIR)
-        st.success("Dataset downloaded and extracted successfully!")
+        # st.success("Dataset downloaded and extracted successfully!")
     except Exception as e:
         st.error(f"Failed to download dataset: {str(e)}")
         st.info("Please manually download from Kaggle and place in ./data/")
@@ -36,10 +36,11 @@ def check_data_files():
     """Verify all required files exist"""
     missing_files = [f for f in REQUIRED_FILES if not os.path.exists(f"{DATA_DIR}/{f}")]
     if missing_files:
-        st.warning(f"Missing files: {', '.join(missing_files)}")
-        if st.button("Download dataset automatically (may require Kaggle login)"):
-            download_dataset()
-        st.stop()
+        download_dataset()
+        # st.warning(f"Missing files: {', '.join(missing_files)}")
+        # if st.button("Download dataset automatically"):
+        #     download_dataset()
+        # st.stop()
 
 @st.cache_data
 def load_data():
