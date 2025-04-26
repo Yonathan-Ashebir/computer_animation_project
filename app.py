@@ -58,8 +58,8 @@ def main():
     st.title("🎓 Open University Performance Analyzer")
     
     # Load data with progress indicator
-    with st.spinner("Loading data..."):
-        data = load_data()
+    # with st.spinner("Loading data..."):
+    data = load_data()
     
     # Merge datasets
     df = data["student_info"].merge(
