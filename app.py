@@ -2,12 +2,12 @@
 import streamlit as st
 
 # Configure the app
-st.set_page_config(
-    page_title="Student Analytics Dashboard",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+# st.set_page_config(
+#     page_title="Student Analytics Dashboard",
+#     page_icon="📊",
+#     layout="wide",
+#     initial_sidebar_state="expanded"
+# )
 
 # Define the pages (assuming files are in ./pages/)
 home_page = st.Page(
