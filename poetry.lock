@@ -800,6 +800,48 @@ files = [
 pygments = "*"
 
 [[package]]
+name = "ipyvizzu"
+version = "0.18.0"
+description = "Build animated charts in Jupyter Notebook and similar environments with a simple Python syntax."
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "ipyvizzu-0.18.0-py3-none-any.whl", hash = "sha256:33cff7d665309f79f11cf9bbe348a5552616ed1aa47edc03dcbf165ced1e0b2f"},
+    {file = "ipyvizzu-0.18.0.tar.gz", hash = "sha256:0783c860b644c04a3cf68fc20a980145a718ddce1a97cf0f5a6c67663f03f1ce"},
+]
+
+[package.dependencies]
+IPython = "*"
+jsonschema = "*"
+
+[package.extras]
+fugue = ["fugue[sql]"]
+numpy = ["numpy"]
+pandas = ["pandas"]
+pyspark = ["pyspark"]
+
+[[package]]
+name = "ipyvizzu-story"
+version = "0.12.0"
+description = "Build, present and share animated data stories in Jupyter Notebook and similar environments."
+optional = false
+python-versions = ">=3.9"
+groups = ["main"]
+files = [
+    {file = "ipyvizzu_story-0.12.0-py3-none-any.whl", hash = "sha256:536bd2243f9753be478dccfc3706a9ad5fcd10efce4c97149c02c80c87703159"},
+    {file = "ipyvizzu_story-0.12.0.tar.gz", hash = "sha256:c81f1630eaf16ccc0a42db50bc65db708303f3716f22f355ced71ebde4f3baea"},
+]
+
+[package.dependencies]
+ipyvizzu = "<1.0.0"
+
+[package.extras]
+jupyter = ["IPython"]
+panel = ["panel"]
+streamlit = ["streamlit"]
+
+[[package]]
 name = "ipywidgets"
 version = "8.1.6"
 description = "Jupyter interactive widgets"
@@ -2862,4 +2904,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.12"
-content-hash = "58366be052e31a63cf1e61306fa79bcecd8d7896dad568e26698d94a6c5eb052"
+content-hash = "acc2920ee87205829abcad449224a3c5ad1aeb7c701b54b531113672e228d1eb"

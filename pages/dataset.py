@@ -6,12 +6,12 @@ from loader import courses, assessments, student_info, student_vle, student_asse
 # Page configuration (MUST be first)
 # st.set_page_config(
 #     page_title="Dataset Explorer",
-#     page_icon="📊",
+#     page_icon="🔍",
 #     layout="wide"
 # )
 
 # Page Header
-st.title("📊 Dataset Explorer")
+st.title("🔍 Dataset Explorer")
 
 # =====================
 # 1. Dataset Overview

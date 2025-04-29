@@ -334,8 +334,82 @@ st.markdown("---")
 st.header("📋 Pre-Enrollment Characteristics")
 st.markdown("Analyzing student demographics and background before course enrollment.")
 
-# 1. Age Distribution
-st.subheader("Age Distribution by Performance")
+# =============================================
+# IMD vs GENDER/AGE ANALYSIS HEATMAPS
+# =============================================
+
+# Prepare the data
+analysis_df = student_info.copy()
+analysis_df['passed'] = analysis_df['final_result'].isin(['Pass', 'Distinction']).astype(int)
+
+# Create combined gender-age groups
+analysis_df['gender_age'] = analysis_df['gender'] + ' - ' + analysis_df['age_band']
+
+# Calculate pass rates by IMD and Gender-Age
+pass_rates = analysis_df.groupby(['gender_age', 'imd_band'])['passed'].mean().unstack()
+
+# Calculate average scores by IMD and Gender-Age
+merged_scores = pd.merge(student_assessment, student_info[['id_student', 'gender', 'age_band', 'imd_band']], on='id_student')
+merged_scores['gender_age'] = merged_scores['gender'] + ' - ' + merged_scores['age_band']
+avg_scores = merged_scores.groupby(['gender_age', 'imd_band'])['score'].mean().unstack()
+
+# Define color scales
+pass_rate_colorscale = [[0, '#F44336'], [0.5, '#FFC107'], [1, '#4CAF50']]  # Red-Yellow-Green
+score_colorscale = [[0, '#F44336'], [0.5, '#FFC107'], [1, '#4CAF50']]  # Red-Yellow-Green
+
+# First Heatmap: Pass Rates
+st.subheader("1.1. Pass Rate by IMD (x) vs Gender-Age Groups (y)")
+fig_pass = go.Figure(data=go.Heatmap(
+    z=pass_rates.values,
+    x=pass_rates.columns,  # IMD bands on x-axis
+    y=pass_rates.index,    # Gender-Age groups on y-axis
+    colorscale=pass_rate_colorscale,
+    zmin=0,
+    zmax=1,
+    colorbar=dict(title='Pass Rate', tickformat='.0%'),
+    hovertemplate='<b>%{y}</b><br>IMD: %{x}<br>Pass Rate: %{z:.1%}<extra></extra>'
+))
+fig_pass.update_layout(
+    xaxis_title='IMD Band',
+    yaxis_title='Gender - Age Group',
+    height=600,
+    margin=dict(l=100)  # Extra space for y-axis labels
+)
+st.plotly_chart(fig_pass, use_container_width=True)
+
+
+
+# Second Heatmap: Average Scores
+st.subheader("1.2. Average Score by IMD (x) vs Gender-Age Groups (y)")
+fig_score = go.Figure(data=go.Heatmap(
+    z=avg_scores.values,
+    x=avg_scores.columns,  # IMD bands on x-axis
+    y=avg_scores.index,    # Gender-Age groups on y-axis
+    colorscale=score_colorscale,
+
+
+    colorbar=dict(title='Average Score'),
+    hovertemplate='<b>%{y}</b><br>IMD: %{x}<br>Avg Score: %{z:.1f}<extra></extra>'
+))
+fig_score.update_layout(
+    xaxis_title='IMD Band',
+    yaxis_title='Gender - Age Group',
+    height=600,
+    margin=dict(l=100)  # Extra space for y-axis labels
+)
+st.plotly_chart(fig_score, use_container_width=True)
+
+# Add interpretation guidance
+st.markdown("""
+**How to read these charts:**
+- Each row represents a unique Gender-Age combination
+- Each column represents an IMD band (socioeconomic status)
+- Darker green indicates higher pass rates/scores
+- Hover over cells for exact values
+""")
+
+
+st.subheader("1.3. Age Distribution by Performance")
 age_data = filtered_student_info[['age_band', 'final_result']].copy()
 fig_age = px.histogram(
     age_data,
@@ -358,8 +432,114 @@ fig_age.update_layout(
 )
 st.plotly_chart(fig_age, use_container_width=True)
 
-# 2. Prior Education Impact
-st.subheader("Prior Education vs Performance")
+
+import streamlit.components.v1 as components
+from ipyvizzu import Data, Config, Style
+from ipyvizzustory import Story, Slide, Step
+
+# Subheader
+st.subheader("1.4. Performance Distribution Breakdown")
+
+# Prepare the data
+result_counts = student_info.groupby(['final_result', 'gender', 'age_band']).size().reset_index(name='count')
+
+# Create ipyvizzu data object
+data = Data()
+data.add_series("Result", result_counts['final_result'].tolist())
+data.add_series("Gender", result_counts['gender'].tolist())
+data.add_series("Age", result_counts['age_band'].tolist())
+data.add_series("Count", result_counts['count'].tolist())
+
+# Create story
+story = Story(data=data)
+story.set_size("100%", "400px")  # Responsive width, fixed height
+
+# Custom style matching Streamlit aesthetics
+custom_style = Style({
+    "title": {"fontSize": "14px"},
+    "plot": {
+        "marker": {
+            "colorPalette": "#4CAF50 #2196F3 #FFC107 #F44336",  # Green, Blue, Yellow, Red
+            "label": {
+                "fontSize": "12px",
+                "color": "#333333"
+            }
+        },
+        "xAxis": {"label": {"fontSize": "12px", "angle": -45}},
+        "yAxis": {"label": {"fontSize": "12px"}}
+    }
+})
+
+# Slide 1: Base view - Result counts
+story.add_slide(
+    Slide(
+        Step(
+            Config({
+                "x": "Result", 
+                "y": "Count",
+                "title": "1. Overall Performance Distribution"
+            }),
+            custom_style
+        )
+    )
+)
+
+# Slide 2: Split by gender
+story.add_slide(
+    Slide(
+        Step(
+            Config({
+                "x": "Result",
+                "y": "Count",
+                "color": "Gender",
+                "split": True,
+                "title": "2. Split by Gender (M/F)"
+            }),
+            custom_style
+        )
+    )
+)
+
+# Slide 3: Split by gender and age
+story.add_slide(
+    Slide(
+        Step(
+            Config({
+                "x": "Result",
+                "y": "Count",
+                "color": "Gender",
+                "split": "Age",
+                "title": "3. Split by Gender & Age Groups"
+            }),
+            custom_style
+        )
+    )
+)
+
+# Add playback controls explanation
+st.caption("Use the player controls to navigate through the animation steps")
+
+# Render in Streamlit
+components.html(
+    story.to_html(),
+    height=450,  # Slightly taller than the chart to accommodate controls
+    scrolling=False
+)
+
+# Add interpretation guide
+with st.expander("How to interpret this visualization", expanded=False):
+    st.markdown("""
+    This animated breakdown shows:
+    - **Step 1**: Overall distribution of student outcomes
+    - **Step 2**: How outcomes differ between genders
+    - **Step 3**: How outcomes vary by both gender and age groups
+    
+    Colors represent:
+    - 🟢 Pass | 🔵 Distinction | 🟡 Withdrawn | 🔴 Fail
+    - Gender split: Darker shades = Male | Lighter shades = Female
+    """)
+
+st.subheader("1.5. Prior Education vs Performance")
 edu_data = filtered_student_info[['highest_education', 'final_result']].copy()
 fig_edu = px.pie(
     edu_data,
@@ -382,8 +562,8 @@ fig_edu.update_layout(
 fig_edu.for_each_annotation(lambda a: a.update(text=a.text.split("=")[-1]))
 st.plotly_chart(fig_edu, use_container_width=True)
 
-# 3. Gender Distribution
-st.subheader("Gender Performance Breakdown")
+
+st.subheader("1.6. Gender Performance Breakdown")
 gender_data = filtered_student_info[['gender', 'final_result']].copy()
 fig_gender = px.sunburst(
     gender_data,
@@ -402,7 +582,7 @@ st.plotly_chart(fig_gender, use_container_width=True)
 
 
 # Assessment Scores by Gender
-st.subheader("Gender Performance in Assessments")
+st.subheader("1.7. Gender Performance in Assessments")
 merged_scores = pd.merge(
     pd.merge(filtered_student_assessment, filtered_assessments, on='id_assessment'),
     filtered_student_info[['id_student', 'gender']],
@@ -425,47 +605,8 @@ fig_scores.update_layout(
 )
 st.plotly_chart(fig_scores, use_container_width=True)
 
-# =============================================
-# POST-ENROLLMENT FACTORS SECTION
-# =============================================
-st.markdown("---")
-st.header("2. Post-Enrollment Factors")
 
-# --- VLE Engagement by Outcome ---
-st.subheader("2.1 Engagement by Final Result")
-
-if 'sum_click' in student_vle.columns:
-    engagement = (
-        student_vle.merge(
-            student_info[['id_student', 'final_result']], 
-            on='id_student'
-        )
-        .groupby(['id_student', 'final_result'])['sum_click']
-        .sum()
-        .reset_index()
-    )
-    
-    fig = px.box(
-        engagement,
-        x='final_result',
-        y='sum_click',
-        color='final_result',
-        category_orders={'final_result': ['Withdrawn', 'Fail', 'Pass', 'Distinction']},
-        color_discrete_map={
-            'Withdrawn': '#FFC107',
-            'Fail': '#F44336', 
-            'Pass': '#4CAF50',
-            'Distinction': '#2196F3'
-        },
-        labels={'sum_click': 'Total VLE Clicks', 'final_result': 'Outcome'}
-    )
-    fig.update_layout(showlegend=False)
-    st.plotly_chart(fig, use_container_width=True)
-else:
-    st.warning("Engagement data not available")
-
-# 2.2 Attempt Flow Analysis
-st.subheader("2.2 Outcome Pathways by Attempt History")
+st.subheader("1.8 Outcome Pathways by Attempt History")
 
 # Prepare data with meaningful attempt groups
 attempt_flow = student_info.copy()
@@ -548,8 +689,139 @@ fig.add_annotation(
 
 st.plotly_chart(fig, use_container_width=True)
 
-# 2.3 Weekly Engagement Patterns
-st.subheader("2.3 Weekly Engagement Trends")
+# =============================================
+# OUTCOME DISTRIBUTION DONUT CHART (FIXED ORDER)
+# =============================================
+st.header("1.9 Outcome Distribution")
+
+# Define consistent color mapping and fixed order
+CATEGORY_ORDER = ['Pass', 'Fail', 'Withdrawn', 'Distinction']
+COLOR_MAP = {
+    'Pass': '#59a14f',
+    'Fail': '#e15759',
+    'Withdrawn': '#edc948',
+    'Distinction': '#4e79a7'
+}
+
+# Create filter controls in the right column
+chart_col, filter_col = st.columns([3, 1])
+
+with filter_col:
+    st.markdown("### Filters")
+    
+    # Disability filter
+    disability_status = st.radio(
+        "Disability Status",
+        options=["All", "Has Disability", "No Disability"],
+        index=0
+    )
+    
+    # Gender filter
+    gender_options = ["All"] + sorted(student_info['gender'].dropna().unique().tolist())
+    gender_filter = st.selectbox(
+        "Gender",
+        options=gender_options,
+        index=0
+    )
+
+# Filter the data
+filtered_data = student_info.copy()
+
+if disability_status == "Has Disability":
+    filtered_data = filtered_data[filtered_data['disability'] == True]
+elif disability_status == "No Disability":
+    filtered_data = filtered_data[filtered_data['disability'] == False]
+    
+if gender_filter != "All":
+    filtered_data = filtered_data[filtered_data['gender'] == gender_filter]
+
+# Calculate outcome distribution with fixed order
+outcome_counts = filtered_data['final_result'].value_counts()
+outcome_dist = outcome_counts.reindex(CATEGORY_ORDER, fill_value=0)  # Maintain order
+outcome_pct = (outcome_dist / outcome_dist.sum()) * 100  # Convert to percentages
+ordered_colors = [COLOR_MAP[result] for result in outcome_pct.index]  # Get colors in order
+
+with chart_col:
+    # Create and display donut chart
+    fig = go.Figure(
+        data=[go.Pie(
+            labels=outcome_pct.index,
+            values=outcome_pct.values,
+            hole=0.6,
+            marker_colors=ordered_colors,
+            textinfo='label+percent',
+            textposition='inside',
+            insidetextorientation='radial',
+            sort=False  # Disable automatic sorting
+        )]
+    )
+    
+    fig.update_layout(
+        showlegend=False,
+        margin=dict(t=0, b=0, l=0, r=0),
+        height=500,
+        paper_bgcolor='rgba(0,0,0,0)'
+    )
+    
+    fig.update_traces(
+        hoverinfo='label+percent',
+        textfont_size=14,
+        marker_line=dict(width=1, color='white')
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    st.caption(f"Showing results for {len(filtered_data)} students")
+
+    # Add hidden table to verify order (for debugging)
+    if st.checkbox("Show data table", False):
+        st.dataframe(outcome_pct.reset_index().rename(columns={
+            'index': 'Outcome',
+            'final_result': 'Percentage'
+        }))
+
+
+# =============================================
+# POST-ENROLLMENT FACTORS SECTION
+# =============================================
+st.markdown("---")
+st.header("2. Post-Enrollment Factors")
+
+# --- VLE Engagement by Outcome ---
+st.subheader("2.1 Engagement by Final Result")
+
+if 'sum_click' in student_vle.columns:
+    engagement = (
+        student_vle.merge(
+            student_info[['id_student', 'final_result']], 
+            on='id_student'
+        )
+        .groupby(['id_student', 'final_result'])['sum_click']
+        .sum()
+        .reset_index()
+    )
+    
+    fig = px.box(
+        engagement,
+        x='final_result',
+        y='sum_click',
+        color='final_result',
+        category_orders={'final_result': ['Withdrawn', 'Fail', 'Pass', 'Distinction']},
+        color_discrete_map={
+            'Withdrawn': '#FFC107',
+            'Fail': '#F44336', 
+            'Pass': '#4CAF50',
+            'Distinction': '#2196F3'
+        },
+        labels={'sum_click': 'Total VLE Clicks', 'final_result': 'Outcome'}
+    )
+    fig.update_layout(showlegend=False)
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.warning("Engagement data not available")
+
+
+# 2.2 Weekly Engagement Patterns
+st.subheader("2.2 Weekly Engagement Trends")
 
 # Calculate weekly activity
 weekly_activity = student_vle.merge(
@@ -616,8 +888,8 @@ Critical periods marked where engagement patterns diverge most between outcome g
 """)
 
 
-# 2.4 Withdrawal Risk Analysis
-st.subheader("2.4 Withdrawal Probability by Course Progress")
+# 2.3 Withdrawal Risk Analysis
+st.subheader("2.3 Withdrawal Probability by Course Progress")
 
 # Calculate course progress (assuming timeline_data exists from earlier)
 timeline_data = student_vle.merge(
@@ -710,8 +982,8 @@ st.info(f"""
 Early interventions before this point may improve retention.
 """)
 
-# 2.5 Course Benchmarking
-st.subheader("2.5 Course Benchmarking")
+# 2.4 Course Benchmarking
+st.subheader("2.4 Course Benchmarking")
 
 # Calculate real course metrics
 course_metrics = (
@@ -786,8 +1058,8 @@ if st.checkbox("Show course metrics data"):
         }
     )
 
-# 2.6 Score Distribution by Course
-st.subheader("2.6 Course Score Distributions")
+# 2.5 Score Distribution by Course
+st.subheader("2.5 Course Score Distributions")
 
 # Merge and plot
 merged_scores = pd.merge(student_assessment, assessments, on='id_assessment')
@@ -820,3 +1092,53 @@ fig_course.update_layout(
 )
 
 st.plotly_chart(fig_course, use_container_width=True)
+
+
+# import streamlit as st
+# import streamlit.components.v1 as components
+# from ipyvizzu import Data, Config
+# from ipyvizzustory import Story, Slide, Step
+
+# # Prepare data
+# data = Data()
+# data.add_series("Category", ["A", "B", "C"])
+# data.add_series("Value", [10, 20, 30])
+
+# # Create story
+# story = Story(data=data)
+# slide = Slide(Step(Config({"x": "Category", "y": "Value"})))
+# story.add_slide(slide)
+
+# # Export to HTML
+# html = story.to_html()
+
+# # Render in Streamlit
+# components.html(html, height=500, scrolling=True)
+
+# import streamlit as st
+# import streamlit.components.v1 as components
+# from ipyvizzu import Data, Config
+# from ipyvizzustory import Story, Slide, Step
+
+# # Prepare data
+# data = Data()
+# data.add_series("Category", ["A", "B", "C"])
+# data.add_series("Value", [10, 20, 30])
+
+# # Create story
+# story = Story(data=data)
+
+# # First step (your original)
+# slide1 = Slide(Step(Config({"x": "Category", "y": "Value"})))
+# story.add_slide(slide1)
+
+# # Second step (new - Pie chart)
+# slide2 = Slide(Step(Config({"angle": "Value", "geometry": "circle", "color": "Category"})))
+# story.add_slide(slide2)
+
+# # Export to HTML
+# html = story.to_html()
+
+# # Render in Streamlit
+# components.html(html, height=500, scrolling=True)
+
