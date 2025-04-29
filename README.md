@@ -1,6 +1,24 @@
-# Open University Student Performance Analyzer
+#  🎓 Open University Student Performance Analyzer
 
-<!-- ![Dashboard Screenshot](./screenshot.png) *Example dashboard visualization* -->
+![Dashboard Screenshot](./screenshot.png)
+
+<p align="center">
+  <a href="https://kaggle.com/your-dataset-link" target="_blank">
+    <img src="https://kaggle.com/static/images/open-in-kaggle.svg" alt="Open Dataset in Kaggle"/>
+  </a>
+</p>
+
+
+<p align="center">
+  <a href="https://computer-animation-project.streamlit.app/" target="_blank">
+    <img src="https://static.streamlit.io/badges/streamlit_badge_black_white.svg" alt="View in Streamlit"/>
+  </a>
+  &nbsp;
+  <a href="https://open-university-student-performance.onrender.com/" target="_blank">
+    <img src="https://img.shields.io/badge/View-Docker-blue?logo=docker&logoColor=white" alt="View on Render + Docker"/>
+  </a>
+</p>
+
 
 ## 📌 Overview
 
@@ -63,9 +81,15 @@ cd computer_animation_project
 ```
 
 2. Install dependencies:
-```bash
+(for deployment purposes the poetry files is currently inside `_fix`) <!--todo fix-->
+ ```bash
 poetry install
 ```
+```bash
+pip install -r requirements.txt
+```
+The latter will install deployment dependencies only
+
 
 3. Place dataset files in `./data/` or let the app attempt automatic download
 
@@ -94,4 +118,4 @@ This project uses the [Open University Dataset](https://www.kaggle.com/datasets/
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request for any improvements.
+This intended to be as a one time educational project but still contributions are welcome! Please open an issue or submit a pull request for any improvements.
