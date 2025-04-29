@@ -1,5 +1,8 @@
 import pandas as pd
 import plotly.express as px
+import os
+import requests
+import streamlit as st
 
 # Configuration
 DATASET_URL = "https://www.kaggle.com/api/v1/datasets/download/mohammadehsani/student-performance-at-open-university"
@@ -12,7 +15,33 @@ REQUIRED_FILES = [
     "studentAssessment.csv"
 ]
 
+def download_dataset():
+    """Download and extract dataset if missing"""
+    os.makedirs(DATA_DIR, exist_ok=True)
+    
+    try:
+        # Kaggle requires authentication - this may fail without credentials
+        response = requests.get(DATASET_URL)
+        with zipfile.ZipFile(BytesIO(response.content)) as zip_ref:
+            zip_ref.extractall(DATA_DIR)
+        # st.success("Dataset downloaded and extracted successfully!")
+    except Exception as e:
+        st.error(f"Failed to download dataset: {str(e)}")
+        st.info("Please manually download from Kaggle and place in ./data/")
+
+def check_data_files():
+    """Verify all required files exist"""
+    missing_files = [f for f in REQUIRED_FILES if not os.path.exists(f"{DATA_DIR}/{f}")]
+    if missing_files:
+        download_dataset()
+        # st.warning(f"Missing files: {', '.join(missing_files)}")
+        # if st.button("Download dataset automatically"):
+        #     download_dataset()
+        # st.stop()
+
+@st.cache_resource
 def load_data():
+    check_data_files()
     # Define ordered categories
     result_order = ['Withdrawn', 'Fail', 'Pass', 'Distinction']
     age_band_order = ['0-35', '35-55', '55<=']

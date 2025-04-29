@@ -6,13 +6,6 @@ import plotly.graph_objects as go
 import streamlit.components.v1 as components
 from loader import courses, assessments, student_info, student_vle, student_assessment
 
-# Page configuration
-st.set_page_config(
-    page_title="Student Analytics Dashboard",
-    page_icon="📊",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
 # Convert ALL categorical columns to strings
 def df_to_strings(df):
