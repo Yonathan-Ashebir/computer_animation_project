@@ -25,6 +25,29 @@ assessments = df_to_strings(assessments)
 student_vle = df_to_strings(student_vle)
 student_assessment = df_to_strings(student_assessment)
 
+with st.sidebar:
+    st.markdown("## Table of Contents")
+    
+    st.markdown("""
+    **Pre-Enrollment Characteristics**  
+    [1.1. Pass Rate by IMD (x) vs Gender-Age Groups (y)](#1-1-pass-rate-by-imd-x-vs-gender-age-groups-y)  
+    [1.2. Average Score by IMD (x) vs Gender-Age Groups (y)](#1-2-average-score-by-imd-x-vs-gender-age-groups-y)  
+    [1.3. Age Distribution by Performance](#1-3-age-distribution-by-performance)  
+    [1.4. Performance Distribution Breakdown](#1-4-performance-distribution-breakdown)  
+    [1.5. Prior Education vs Performance](#1-5-prior-education-vs-performance)  
+    [1.6. Gender Performance Breakdown](#1-6-gender-performance-breakdown)  
+    [1.7. Gender Performance in Assessments](#1-7-gender-performance-in-assessments)  
+    [1.8. Outcome Pathways by Attempt History](#1-8-outcome-pathways-by-attempt-history)  
+    [1.9. Outcome Distribution Among Different Demographic Classes](#1-9-outcome-distribution-among-different-demographic-classes)  
+
+    **Post-Enrollment Factors**  
+    [2.1. Engagement by Final Result](#2-1-engagement-by-final-result)  
+    [2.2. Weekly Engagement Trend](#2-2-weekly-engagement-trends)  
+    [2.3. Withdrawal Probability by Course Progress](#2-3-withdrawal-probability-by-course-progress)  
+    [2.4. Course Benchmarking](#2-4-course-benchmarking)  
+    [2.5. Course Score Distributions](#2-5-course-score-distributions)  
+    """)
+
 # Sidebar filters
 with st.sidebar:
     st.title("🎛️ Filters")
@@ -349,7 +372,8 @@ analysis_df['gender_age'] = analysis_df['gender'] + ' - ' + analysis_df['age_ban
 pass_rates = analysis_df.groupby(['gender_age', 'imd_band'])['passed'].mean().unstack()
 
 # Calculate average scores by IMD and Gender-Age
-merged_scores = pd.merge(student_assessment, student_info[['id_student', 'gender', 'age_band', 'imd_band']], on='id_student')
+merged_scores = pd.merge(student_assessment, student_info[student_info['imd_band'].notna()][['id_student', 'gender', 'age_band', 'imd_band']], on='id_student') # Do not forget to filter N/A imd_band values
+
 merged_scores['gender_age'] = merged_scores['gender'] + ' - ' + merged_scores['age_band']
 avg_scores = merged_scores.groupby(['gender_age', 'imd_band'])['score'].mean().unstack()
 
@@ -692,7 +716,7 @@ st.plotly_chart(fig, use_container_width=True)
 # =============================================
 # OUTCOME DISTRIBUTION DONUT CHART (FIXED ORDER)
 # =============================================
-st.header("1.9 Outcome Distribution")
+st.header("1.9 Outcome Distribution Among Different Demographic Classes")
 
 # Define consistent color mapping and fixed order
 CATEGORY_ORDER = ['Pass', 'Fail', 'Withdrawn', 'Distinction']
