@@ -2,11 +2,17 @@
 import streamlit as st
 import plotly.express as px
 import pandas as pd
+import plotly.graph_objects as go
+import streamlit.components.v1 as components
 from loader import courses, assessments, student_info, student_vle, student_assessment
 
 # Page configuration
-st.set_page_config(layout="wide")
-
+st.set_page_config(
+    page_title="Student Analytics Dashboard",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 # Convert ALL categorical columns to strings
 def df_to_strings(df):
@@ -40,9 +46,11 @@ filtered_student_assessment = student_assessment.merge(
 # =============================================
 # DASHBOARD HEADER SECTION
 # =============================================
-st.title("📊 Open University At A Glance")
-st.markdown("""
-    <style>
+st.title("Overview")
+
+# Define reusable style
+card_style = """
+<style>
     .metric-card {
         padding: 20px;
         border-radius: 12px;
@@ -70,147 +78,255 @@ st.markdown("""
     .double-card {
         grid-column: span 2;
     }
-    </style>
-""", unsafe_allow_html=True)
+</style>
+"""
 
 # Calculate metrics
 total_students = len(student_info)
 total_courses = len(courses['code_module'].unique())
 active_students = len(filtered_student_info)
 gender_dist = student_info['gender'].value_counts(normalize=True)
-disability_rate = student_info['disability'].value_counts(normalize=True).get('Y', 0)
+disability_rate = student_info['disability'].value_counts(normalize=True).get(True, 0)
 age_dist = student_info['age_band'].value_counts().nlargest(3)
 presentation_dist = student_info['code_presentation'].value_counts()
 result_dist = student_info['final_result'].value_counts(normalize=True)
 
-
 # Create the dashboard grid
-# col1, col2, col3 = st.columns([2,3,2])
-# with col1:
-#     # Student Metrics Card
-#     st.markdown(f"""
-#         <div class="metric-card">
-#             <div class="metric-title">Total Students</div>
-#             <div class="metric-value">{total_students:,}</div>
-#             <div class="metric-chart">
-#                 {px.pie(names=gender_dist.index, values=gender_dist.values, hole=0.7, 
-#                       color_discrete_sequence=['#4e79a7','#f28e2b'], width=180, height=180)
-#                  .update_layout(showlegend=False, margin=dict(t=0,b=0,l=0,r=0))
-#                  .update_traces(textinfo='none')
-#                  .to_html(full_html=False)}
-#             </div>
-#         </div>
-#     """, unsafe_allow_html=True)
+col1, col2, col3 = st.columns([2, 3, 2])
 
-# with col2:
-#     # Double-width Course Metrics Card
-#     st.markdown(f"""
-#         <div class="metric-card double-card">
-#             <div class="metric-title">Course Distribution</div>
-#             <div style="display: flex; justify-content: space-between;">
-#                 <div style="width: 40%;">
-#                     <div class="metric-value">{total_courses}</div>
-#                     <div>Unique Courses</div>
-#                 </div>
-#                 <div style="width: 60%;">
-#                     {px.bar(presentation_dist, orientation='h', 
-#                            color_discrete_sequence=['#59a14f'])
-#                      .update_layout(showlegend=False, margin=dict(t=20,b=20,l=20,r=20),
-#                                   height=150, xaxis_visible=False)
-#                      .update_yaxes(title=None)
-#                      .to_html(full_html=False)}
-#                 </div>
-#             </div>
-#         </div>
-#     """, unsafe_allow_html=True)
+# ========== COLUMN 1 ==========
+with col1:
+    # Student Metrics Card
+    fig = go.Figure(
+        data=[go.Pie(
+            labels=gender_dist.index, 
+            values=gender_dist.values, 
+            hole=0.7,
+            marker_colors=['#4e79a7', '#f28e2b'],
+            textinfo='none'
+        )]
+    )
+    fig.update_layout(
+        showlegend=False,
+        margin=dict(t=0, b=0, l=0, r=0),
+        width=180,
+        height=180,
+        paper_bgcolor='rgba(0,0,0,0)'
+    )
+    html_text = fig.to_html(full_html=False, include_plotlyjs='cdn')
+    
+    components.html(f"""
+        {card_style}
+        <div class="metric-card">
+            <div class="metric-title">Total Students</div>
+            <div class="metric-value">{total_students:,}</div>
+            <div class="metric-chart" style="width: 180px; height: 180px; margin: auto;">
+                {html_text}
+            </div>
+        </div>
+    """, height=300)
 
-# with col3:
-#     # Active Students Card
-#     st.markdown(f"""
-#         <div class="metric-card">
-#             <div class="metric-title">Currently Enrolled</div>
-#             <div class="metric-value">{active_students:,}</div>
-#             <div class="metric-chart">
-#                 {px.line(x=filtered_student_info['code_presentation'].value_counts().index,
-#                        y=filtered_student_info['code_presentation'].value_counts().values,
-#                        markers=True, line_shape='spline',
-#                        color_discrete_sequence=['#e15759'])
-#                  .update_layout(showlegend=False, margin=dict(t=0,b=0,l=0,r=0), height=150)
-#                  .update_xaxes(title=None, visible=False)
-#                  .update_yaxes(title=None, visible=False)
-#                  .to_html(full_html=False)}
-#             </div>
-#         </div>
-#     """, unsafe_allow_html=True)
+# ========== COLUMN 2 ==========
+with col2:
+    # Course Metrics Card
+    fig = go.Figure(
+        data=[go.Bar(
+            y=presentation_dist.index,
+            x=presentation_dist.values,
+            orientation='h',
+            marker_color='#59a14f'
+        )]
+    )
+    fig.update_layout(
+        showlegend=False,
+        margin=dict(t=20, b=20, l=20, r=20),
+        height=150,
+        xaxis_visible=False,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)'
+    )
+    fig.update_yaxes(title=None)
+    bar_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
+    
+    components.html(f"""
+        {card_style}
+        <div class="metric-card">
+            <div class="metric-title">Course Distribution</div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="width: 40%; text-align: center;">
+                    <div class="metric-value">{total_courses}</div>
+                    <div style="color: #6c757d; font-size: 14px;">Unique Courses</div>
+                </div>
+                <div style="width: 60%;">
+                    {bar_html}
+                </div>
+            </div>
+        </div>
+    """, height=250)
 
-# # Second row
-# col1, col2, col3 = st.columns([3,2,2])
-# with col1:
-#     # Age Distribution Card
-#     st.markdown(f"""
-#         <div class="metric-card">
-#             <div class="metric-title">Top Age Groups</div>
-#             <div style="display: flex; gap: 20px;">
-#                 <div style="width: 40%;">
-#                     {px.pie(names=age_dist.index, values=age_dist.values, hole=0.5,
-#                            color_discrete_sequence=['#76b7b2','#59a14f','#edc948'])
-#                      .update_layout(showlegend=False, margin=dict(t=0,b=0,l=0,r=0), height=150)
-#                      .update_traces(textinfo='none')
-#                      .to_html(full_html=False)}
-#                 </div>
-#                 <div style="width: 60%;">
-#                     {px.bar(age_dist, orientation='v',
-#                            color_discrete_sequence=['#76b7b2'])
-#                      .update_layout(showlegend=False, margin=dict(t=20,b=20,l=20,r=20),
-#                                   height=150, yaxis_visible=False)
-#                      .update_xaxes(title=None)
-#                      .to_html(full_html=False)}
-#                 </div>
-#             </div>
-#         </div>
-#     """, unsafe_allow_html=True)
+# ========== COLUMN 3 ==========
+with col3:
+    # Active Students Card
+    fig = go.Figure(
+        data=[go.Scatter(
+            x=filtered_student_info['code_presentation'].value_counts().index,
+            y=filtered_student_info['code_presentation'].value_counts().values,
+            mode='lines+markers',
+            line_shape='spline',
+            marker_color='#e15759'
+        )]
+    )
+    fig.update_layout(
+        showlegend=False,
+        margin=dict(t=0, b=0, l=0, r=0),
+        height=150,
+        xaxis_visible=False,
+        yaxis_visible=False,
+        paper_bgcolor='rgba(0,0,0,0)'
+    )
+    line_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
+    
+    components.html(f"""
+        {card_style}
+        <div class="metric-card">
+            <div class="metric-title">Currently Enrolled</div>
+            <div class="metric-value">{active_students:,}</div>
+            <div class="metric-chart">
+                {line_html}
+            </div>
+        </div>
+    """, height=300)
 
-# with col2:
-#     # Disability Card
-#     st.markdown(f"""
-#         <div class="metric-card">
-#             <div class="metric-title">Students with Disabilities</div>
-#             <div class="metric-value">{disability_rate*100:.1f}%</div>
-#             <div class="metric-chart">
-#                 {px.bar(x=['With Disabilities'], y=[disability_rate*100],
-#                        color_discrete_sequence=['#ff9da7'])
-#                  .update_layout(showlegend=False, margin=dict(t=20,b=20,l=20,r=20),
-#                               height=120, yaxis_range=[0,100])
-#                  .update_xaxes(title=None)
-#                  .update_yaxes(title=None, visible=False)
-#                  .to_html(full_html=False)}
-#             </div>
-#         </div>
-#     """, unsafe_allow_html=True)
+# ========== SECOND ROW ==========
+col1, col2, col3 = st.columns([3, 2, 2])
 
-# with col3:
-#     # Results Card
-#     st.markdown(f"""
-#         <div class="metric-card">
-#             <div class="metric-title">Success Rate</div>
-#             <div class="metric-value">{result_dist.get('Pass', 0)*100:.1f}%</div>
-#             <div class="metric-chart">
-#                 {px.pie(names=result_dist.index, values=result_dist.values, hole=0.6,
-#                       color_discrete_map={
-#                           'Pass': '#59a14f',
-#                           'Fail': '#e15759',
-#                           'Withdrawn': '#edc948',
-#                           'Distinction': '#4e79a7'
-#                       })
-#                  .update_layout(showlegend=False, margin=dict(t=0,b=0,l=0,r=0), height=150)
-#                  .update_traces(textinfo='none')
-#                  .to_html(full_html=False)}
-#             </div>
-#         </div>
-#     """, unsafe_allow_html=True)
+# ========== COLUMN 1 ==========
+with col1:
+    # Age Distribution Card
+    pie_fig = go.Figure(
+        data=[go.Pie(
+            labels=age_dist.index,
+            values=age_dist.values,
+            hole=0.5,
+            marker_colors=['#76b7b2', '#59a14f', '#edc948'],
+            textinfo='none'
+        )]
+    )
+    pie_fig.update_layout(
+        showlegend=False,
+        margin=dict(t=0, b=0, l=0, r=0),
+        height=150,
+        paper_bgcolor='rgba(0,0,0,0)'
+    )
+    pie_html = pie_fig.to_html(full_html=False, include_plotlyjs='cdn')
+    
+    bar_fig = go.Figure(
+        data=[go.Bar(
+            x=age_dist.index,
+            y=age_dist.values,
+            marker_color='#76b7b2'
+        )]
+    )
+    bar_fig.update_layout(
+        showlegend=False,
+        margin=dict(t=0, b=0, l=0, r=0),
+        height=150,
+        yaxis_visible=False,
+        paper_bgcolor='rgba(0,0,0,0)'
+    )
+    bar_html = bar_fig.to_html(full_html=False, include_plotlyjs='cdn')
+    
+    components.html(f"""
+        {card_style}
+        <div class="metric-card">
+            <div class="metric-title">Top Age Groups</div>
+            <div style="display: flex; gap: 20px;">
+                <div style="width: 40%;">
+                    {pie_html}
+                </div>
+                <div style="width: 60%;">
+                    {bar_html}
+                </div>
+            </div>
+        </div>
+    """, height=300)
+
+# ========== COLUMN 2 ==========
+with col2:
+    # Disability Card
+    fig = go.Figure(
+        data=[go.Bar(
+            x=[''],
+            y=[disability_rate*100],
+            marker_color='#ff9da7'
+        )]
+    )
+    fig.update_layout(
+        showlegend=False,
+        margin=dict(t=0, b=0, l=0, r=0),
+        height=120,
+        yaxis_range=[0,100],
+        xaxis_visible=False,
+        yaxis_visible=False,
+        paper_bgcolor='rgba(0,0,0,0)'
+    )
+    bar_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
+    
+    components.html(f"""
+        {card_style}
+        <div class="metric-card">
+            <div class="metric-title">Students with Disabilities</div>
+            <div class="metric-value">{disability_rate*100:.1f}%</div>
+            <div class="metric-chart">
+                {bar_html}
+            </div>
+        </div>
+    """, height=250)
+
+
+# ========== COLUMN 3 ==========
+with col3:
+    # Results Card
+    # Create ordered list of colors matching the result_dist index order
+    color_map = {
+        'Pass': '#59a14f',
+        'Fail': '#e15759', 
+        'Withdrawn': '#edc948',
+        'Distinction': '#4e79a7'
+    }
+    ordered_colors = [color_map[result] for result in result_dist.index]
+    
+    fig = go.Figure(
+        data=[go.Pie(
+            labels=result_dist.index,
+            values=result_dist.values,
+            hole=0.6,
+            marker_colors=ordered_colors,  # Now using a list of colors
+            textinfo='none'
+        )]
+    )
+    fig.update_layout(
+        showlegend=False,
+        margin=dict(t=0, b=0, l=0, r=0),
+        height=150,
+        paper_bgcolor='rgba(0,0,0,0)'
+    )
+    pie_html = fig.to_html(full_html=False, include_plotlyjs='cdn')
+    
+    components.html(f"""
+        {card_style}
+        <div class="metric-card">
+            <div class="metric-title">Success Rate</div>
+            <div class="metric-value">{result_dist.get('Pass', 0)*100:.1f}%</div>
+            <div class="metric-chart">
+                {pie_html}
+            </div>
+        </div>
+    """, height=300)
 
 # Divider
 st.markdown("---")
+
 
 # =============================================
 # PRE-ENROLLMENT CHARACTERISTICS SECTION
@@ -284,11 +400,6 @@ fig_gender = px.sunburst(
 fig_gender.update_layout(margin=dict(t=0, b=0))
 st.plotly_chart(fig_gender, use_container_width=True)
 
-# =============================================
-# ASSESSMENT PERFORMANCE SECTION (Preview)
-# =============================================
-st.header("📝 Assessment Performance Preview")
-st.markdown("Early look at assessment patterns (full analysis in next section)")
 
 # Assessment Scores by Gender
 st.subheader("Gender Performance in Assessments")
@@ -314,6 +425,398 @@ fig_scores.update_layout(
 )
 st.plotly_chart(fig_scores, use_container_width=True)
 
-# Section divider
+# =============================================
+# POST-ENROLLMENT FACTORS SECTION
+# =============================================
 st.markdown("---")
-st.markdown("💡 *Next sections will include detailed course engagement and VLE interaction analysis*")
+st.header("2. Post-Enrollment Factors")
+
+# --- VLE Engagement by Outcome ---
+st.subheader("2.1 Engagement by Final Result")
+
+if 'sum_click' in student_vle.columns:
+    engagement = (
+        student_vle.merge(
+            student_info[['id_student', 'final_result']], 
+            on='id_student'
+        )
+        .groupby(['id_student', 'final_result'])['sum_click']
+        .sum()
+        .reset_index()
+    )
+    
+    fig = px.box(
+        engagement,
+        x='final_result',
+        y='sum_click',
+        color='final_result',
+        category_orders={'final_result': ['Withdrawn', 'Fail', 'Pass', 'Distinction']},
+        color_discrete_map={
+            'Withdrawn': '#FFC107',
+            'Fail': '#F44336', 
+            'Pass': '#4CAF50',
+            'Distinction': '#2196F3'
+        },
+        labels={'sum_click': 'Total VLE Clicks', 'final_result': 'Outcome'}
+    )
+    fig.update_layout(showlegend=False)
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.warning("Engagement data not available")
+
+# 2.2 Attempt Flow Analysis
+st.subheader("2.2 Outcome Pathways by Attempt History")
+
+# Prepare data with meaningful attempt groups
+attempt_flow = student_info.copy()
+
+# Create smart grouping based on attempt distribution
+attempt_counts = attempt_flow['num_of_prev_attempts'].value_counts().sort_index()
+
+# Define logical groupings
+if len(attempt_counts) > 4:
+    bins = [0, 1, 2, 3, attempt_counts.index.max()+1]
+    labels = ["First Attempt (0)", "Second Attempt (1)", "Third Attempt (2)", "4+ Attempts"]
+else:
+    bins = attempt_counts.index.tolist() + [attempt_counts.index.max()+1]
+    labels = [f"{x} Attempts" for x in attempt_counts.index]
+
+attempt_flow['attempt_group'] = pd.cut(
+    attempt_flow['num_of_prev_attempts'],
+    bins=bins,
+    labels=labels,
+    right=False
+)
+
+# Group data
+grouped = attempt_flow.groupby(
+    ['attempt_group', 'final_result']
+).size().reset_index(name='count')
+
+# Create nodes
+all_nodes = grouped['attempt_group'].cat.categories.tolist() + ['Withdrawn', 'Fail', 'Pass', 'Distinction']
+
+# Map indices
+grouped['source_idx'] = grouped['attempt_group'].cat.codes
+grouped['target_idx'] = grouped['final_result'].map({
+    'Withdrawn': len(labels),
+    'Fail': len(labels)+1,
+    'Pass': len(labels)+2,
+    'Distinction': len(labels)+3
+})
+
+# Create Sankey diagram
+fig = go.Figure(go.Sankey(
+    node=dict(
+        pad=20,
+        thickness=25,
+        line=dict(color="black", width=0.7),
+        label=all_nodes,
+        color=px.colors.sequential.Oranges[:len(labels)] + ['#FFC107', '#F44336', '#4CAF50', '#2196F3']
+    ),
+    link=dict(
+        source=grouped['source_idx'],
+        target=grouped['target_idx'],
+        value=grouped['count'],
+        hovertemplate='%{source.label} → %{target.label}<br>Students: %{value:,}<extra></extra>'
+    )
+))
+
+# Style layout
+fig.update_layout(
+    title_text="<b>Student Outcomes by Previous Attempts</b>",
+    title_x=0.05,
+    font_size=12,
+    height=600,
+    margin=dict(t=80, b=20),
+    hoverlabel=dict(
+        bgcolor="white",
+        font_size=12
+    )
+)
+
+# Add explanatory annotation
+fig.add_annotation(
+    x=0.5,
+    y=-0.15,
+    xref="paper",
+    yref="paper",
+    text="Width represents student count; Colors show attempt history",
+    showarrow=False,
+    font=dict(color="#666")
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+# 2.3 Weekly Engagement Patterns
+st.subheader("2.3 Weekly Engagement Trends")
+
+# Calculate weekly activity
+weekly_activity = student_vle.merge(
+    student_info[['id_student', 'final_result']],
+    on='id_student'
+)
+weekly_activity['week'] = (weekly_activity['date'] // 7) + 1
+
+# Aggregate data
+weekly_avg = weekly_activity.groupby(
+    ['week', 'final_result']
+)['sum_click'].mean().reset_index()
+
+# Create line chart
+fig_weekly = px.line(
+    weekly_avg,
+    x='week',
+    y='sum_click',
+    color='final_result',
+    color_discrete_map={
+        'Withdrawn': '#FFC107',
+        'Fail': '#F44336', 
+        'Pass': '#4CAF50',
+        'Distinction': '#2196F3'  # Using your standard blue instead of dark green
+    },
+    labels={
+        'sum_click': 'Average Weekly Clicks', 
+        'week': 'Week of Course',
+        'final_result': 'Outcome'
+    },
+    height=500
+)
+
+# Enhanced styling
+fig_weekly.update_layout(
+    xaxis_title="Week of Course",
+    yaxis_title="Average VLE Interactions",
+    hovermode="x unified",
+    legend_title_text="Final Result",
+    xaxis=dict(
+        tickmode='linear',
+        dtick=1,
+        range=[1, weekly_activity['week'].max()]
+    ),
+    plot_bgcolor='rgba(0,0,0,0.05)'
+)
+
+# Add critical period annotation (highest divergence point)
+max_week = weekly_avg.loc[weekly_avg.groupby('week')['sum_click'].std().idxmax()]
+fig_weekly.add_vline(
+    x=max_week.name,
+    line_dash="dot",
+    line_color="grey",
+    annotation_text=f"Week {max_week.name}: Peak divergence",
+    annotation_position="top right"
+)
+
+st.plotly_chart(fig_weekly, use_container_width=True)
+
+# Add explanatory note
+st.caption("""
+Shows average weekly engagement in the Virtual Learning Environment (VLE). 
+Critical periods marked where engagement patterns diverge most between outcome groups.
+""")
+
+
+# 2.4 Withdrawal Risk Analysis
+st.subheader("2.4 Withdrawal Probability by Course Progress")
+
+# Calculate course progress (assuming timeline_data exists from earlier)
+timeline_data = student_vle.merge(
+    student_info[['id_student', 'code_module', 'code_presentation', 'final_result', 'date_registration']].merge(
+        courses[['code_module', 'code_presentation', 'module_presentation_length']],
+        on=['code_module', 'code_presentation']
+    ),
+    on=['id_student', 'code_module', 'code_presentation']
+).assign(
+    progress=lambda x: 100 * (x['date'] - x['date_registration']) / x['module_presentation_length']
+)
+
+# Bin into checkpoints (0-10%, 10-20%, etc.)
+timeline_data['checkpoint'] = pd.cut(
+    timeline_data['progress'],
+    bins=range(0, 101, 10),
+    labels=[f"{i}-{i+10}%" for i in range(0, 100, 10)],
+    right=False
+)
+
+# Calculate withdrawal rates
+withdrawal_rates = (
+    timeline_data.groupby(['checkpoint', 'id_student'])
+    ['final_result'].first()
+    .eq('Withdrawn')
+    .groupby('checkpoint')
+    .agg(['mean', 'count'])
+    .rename(columns={'mean': 'withdrawal_prob', 'count': 'students_at_risk'})
+    .reset_index()
+)
+
+# Create area chart
+fig_withdrawal = go.Figure()
+
+fig_withdrawal.add_trace(go.Scatter(
+    x=withdrawal_rates['checkpoint'],
+    y=withdrawal_rates['withdrawal_prob']*100,
+    fill='tozeroy',
+    mode='lines+markers',
+    line=dict(color='#F44336', width=3),
+    fillcolor='rgba(244, 67, 54, 0.2)',
+    hovertemplate=(
+        '<b>%{x}</b><br>'
+        'Withdrawal Rate: %{y:.1f}%<br>'
+        'Students at Risk: %{customdata:,}<extra></extra>'
+    ),
+    customdata=withdrawal_rates['students_at_risk'],
+    name='Withdrawal Rate'
+))
+
+# Add peak annotation
+max_rate = withdrawal_rates['withdrawal_prob'].max() * 100
+max_checkpoint = withdrawal_rates.loc[withdrawal_rates['withdrawal_prob'].idxmax(), 'checkpoint']
+fig_withdrawal.add_annotation(
+    x=max_checkpoint,
+    y=max_rate + 3,
+    text=f"Critical Period: {max_rate:.1f}%",
+    showarrow=True,
+    arrowhead=2,
+    ax=0,
+    ay=-40,
+    font=dict(size=12)
+)
+
+# Add overall average
+avg_rate = withdrawal_rates['withdrawal_prob'].mean() * 100
+fig_withdrawal.add_hline(
+    y=avg_rate,
+    line_dash="dot",
+    line_color="gray",
+    annotation_text=f"Average: {avg_rate:.1f}%", 
+    annotation_position="bottom right"
+)
+
+# Style layout
+fig_withdrawal.update_layout(
+    xaxis_title="Course Completion (%)",
+    yaxis_title="Withdrawal Probability (%)",
+    hovermode="x unified",
+    height=500,
+    margin=dict(t=40),
+    showlegend=False
+)
+
+st.plotly_chart(fig_withdrawal, use_container_width=True)
+
+# Key insight box
+st.info(f"""
+**Key Insight**: Highest withdrawal risk occurs at **{max_checkpoint}** completion ({max_rate:.1f}% rate). 
+Early interventions before this point may improve retention.
+""")
+
+# 2.5 Course Benchmarking
+st.subheader("2.5 Course Benchmarking")
+
+# Calculate real course metrics
+course_metrics = (
+    student_info.groupby('code_module')
+    .agg(
+        Enrollment=('id_student', 'nunique'),
+        Pass_Rate=('final_result', lambda x: (x.isin(['Pass', 'Distinction'])).mean() * 100),
+        Avg_Score=('id_student', lambda x: student_assessment[
+            student_assessment['id_student'].isin(x)
+        ]['score'].mean())
+    )
+    .reset_index()
+    .rename(columns={'code_module': 'Course'})
+)
+
+# Visualizations
+col1, col2 = st.columns(2)
+
+with col1:
+    fig_pass = px.bar(
+        course_metrics,
+        x='Course',
+        y='Pass_Rate',
+        color='Course',
+        title='Pass Rates by Course',
+        labels={'Pass_Rate': 'Pass Rate (%)'},
+        height=400
+    )
+    st.plotly_chart(fig_pass, use_container_width=True)
+
+with col2:
+    fig_scatter = px.scatter(
+        course_metrics,
+        x='Enrollment',
+        y='Avg_Score',
+        size='Pass_Rate',
+        color='Course',
+        hover_name='Course',
+        title='Enrollment vs Performance',
+        labels={
+            'Avg_Score': 'Average Score (%)',
+            'Enrollment': 'Number of Students',
+            'Pass_Rate': 'Pass Rate (%)'
+        },
+        height=400
+    )
+    st.plotly_chart(fig_scatter, use_container_width=True)
+
+# Your exact metrics layout - now with REAL data
+st.subheader("Key Statistics")
+cols = st.columns(4)
+cols[0].metric("Total Courses", len(course_metrics))
+cols[1].metric("Avg Pass Rate", f"{course_metrics['Pass_Rate'].mean():.1f}%")
+cols[2].metric("Highest Enrollment", course_metrics['Enrollment'].max())
+cols[3].metric("Top Scoring Course", 
+              course_metrics.loc[course_metrics['Avg_Score'].idxmax()]['Course'],
+              delta=f"{course_metrics['Avg_Score'].max():.1f} pts")
+
+# Raw data toggle (now shows real data)
+if st.checkbox("Show course metrics data"):
+    st.dataframe(
+        course_metrics.style.format({
+            'Pass_Rate': '{:.1f}%',
+            'Avg_Score': '{:.1f}'
+        }),
+        hide_index=True,
+        column_config={
+            "Course": "Course Code",
+            "Enrollment": st.column_config.NumberColumn("Students"),
+            "Pass_Rate": st.column_config.NumberColumn("Pass Rate %"),
+            "Avg_Score": st.column_config.NumberColumn("Avg Score")
+        }
+    )
+
+# 2.6 Score Distribution by Course
+st.subheader("2.6 Course Score Distributions")
+
+# Merge and plot
+merged_scores = pd.merge(student_assessment, assessments, on='id_assessment')
+fig_course = px.box(
+    merged_scores,
+    x='code_module',
+    y='score',
+    color='code_module',
+    labels={'code_module': 'Course', 'score': 'Score (%)'},
+    category_orders={'code_module': sorted(merged_scores['code_module'].unique())},
+    height=500
+)
+
+# Add horizontal mean line
+mean_score = merged_scores['score'].mean()
+fig_course.add_hline(
+    y=mean_score,
+    line_dash="dot",
+    line_color="gray",
+    annotation_text=f"Mean: {mean_score:.1f}%",
+    annotation_position="bottom right"
+)
+
+# Style layout
+fig_course.update_layout(
+    showlegend=False,
+    xaxis_title="Course Code",
+    yaxis_title="Assessment Score (%)",
+    hovermode="x unified"
+)
+
+st.plotly_chart(fig_course, use_container_width=True)
