@@ -355,7 +355,7 @@ st.markdown("Analyzing student demographics and background before course enrollm
 # =============================================
 
 # Prepare the data
-analysis_df = student_info.copy()
+analysis_df = student_info[student_info['imd_band'] != 'nan'].copy()
 analysis_df['passed'] = analysis_df['final_result'].isin(['Pass', 'Distinction']).astype(int)
 
 # Create combined gender-age groups
@@ -365,7 +365,7 @@ analysis_df['gender_age'] = analysis_df['gender'] + ' - ' + analysis_df['age_ban
 pass_rates = analysis_df.groupby(['gender_age', 'imd_band'])['passed'].mean().unstack()
 
 # Calculate average scores by IMD and Gender-Age
-merged_scores = pd.merge(student_assessment, student_info[student_info['imd_band'].notna()][['id_student', 'gender', 'age_band', 'imd_band']], on='id_student') # Do not forget to filter N/A imd_band values
+merged_scores = pd.merge(student_assessment, student_info[student_info['imd_band']!= 'nan'][['id_student', 'gender', 'age_band', 'imd_band']], on='id_student',how='inner') # Do not forget to filter N/A imd_band values
 
 merged_scores['gender_age'] = merged_scores['gender'] + ' - ' + merged_scores['age_band']
 avg_scores = merged_scores.groupby(['gender_age', 'imd_band'])['score'].mean().unstack()
@@ -792,8 +792,8 @@ with chart_col:
     # Add hidden table to verify order (for debugging)
     if st.checkbox("Show data table", False):
         st.dataframe(outcome_pct.reset_index().rename(columns={
-            'index': 'Outcome',
-            'final_result': 'Percentage'
+            'count': 'Percentage (%)',
+            'final_result': 'Outcome'
         }))
 
 

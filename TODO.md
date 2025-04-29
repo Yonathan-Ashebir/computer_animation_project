@@ -1,5 +1,9 @@
 # TODO
 - Fix ipyvizzu story animated demo
+- a little project restructuring
+- ton of optimzation is needed
+- Why deployment crashes after few
+- clean up dependencies
 - Fix poetry deployment
 - quite a bit of proof reading - typos, code inconsistencies ...
 - theming & more styling

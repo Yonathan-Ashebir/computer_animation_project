@@ -1,0 +1,12 @@
+# Note: execluding everything any re-including what is needed did not work
+# # Exclude everything
+# **
+
+# # Include only runtime dependencies
+# !/app.py
+# !/loader.py
+# !/pages
+# !/run.sh
+# !/requriements.txt
+# !/poetry.toml
+# !/poetry.lock
