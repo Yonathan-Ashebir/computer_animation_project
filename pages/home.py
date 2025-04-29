@@ -58,10 +58,10 @@ with st.sidebar:
     )
 
 # Filter data
-filtered_student_info = student_info[student_info['code_presentation'].isin(selected_presentations)].copy()
-filtered_assessments = assessments[assessments['code_presentation'].isin(selected_presentations)].copy()
-filtered_student_assessment = student_assessment.merge(
-    filtered_student_info[['id_student']],
+student_info = student_info[student_info['code_presentation'].isin(selected_presentations)].copy()
+assessments = assessments[assessments['code_presentation'].isin(selected_presentations)].copy()
+student_assessment = student_assessment.merge(
+    student_info[['id_student']],
     on='id_student',
     how='inner'
 ).copy()
@@ -107,7 +107,7 @@ card_style = """
 # Calculate metrics
 total_students = len(student_info)
 total_courses = len(courses['code_module'].unique())
-active_students = len(filtered_student_info)
+active_students = len(student_info)
 gender_dist = student_info['gender'].value_counts(normalize=True)
 disability_rate = student_info['disability'].value_counts(normalize=True).get(True, 0)
 age_dist = student_info['age_band'].value_counts().nlargest(3)
@@ -192,8 +192,8 @@ with col3:
     # Active Students Card
     fig = go.Figure(
         data=[go.Scatter(
-            x=filtered_student_info['code_presentation'].value_counts().index,
-            y=filtered_student_info['code_presentation'].value_counts().values,
+            x=student_info['code_presentation'].value_counts().index,
+            y=student_info['code_presentation'].value_counts().values,
             mode='lines+markers',
             line_shape='spline',
             marker_color='#e15759'
@@ -434,7 +434,7 @@ st.markdown("""
 
 
 st.subheader("1.3. Age Distribution by Performance")
-age_data = filtered_student_info[['age_band', 'final_result']].copy()
+age_data = student_info[['age_band', 'final_result']].copy()
 fig_age = px.histogram(
     age_data,
     x='age_band',
@@ -564,7 +564,7 @@ with st.expander("How to interpret this visualization", expanded=False):
     """)
 
 st.subheader("1.5. Prior Education vs Performance")
-edu_data = filtered_student_info[['highest_education', 'final_result']].copy()
+edu_data = student_info[['highest_education', 'final_result']].copy()
 fig_edu = px.pie(
     edu_data,
     names='highest_education',
@@ -588,7 +588,7 @@ st.plotly_chart(fig_edu, use_container_width=True)
 
 
 st.subheader("1.6. Gender Performance Breakdown")
-gender_data = filtered_student_info[['gender', 'final_result']].copy()
+gender_data = student_info[['gender', 'final_result']].copy()
 fig_gender = px.sunburst(
     gender_data,
     path=['gender', 'final_result'],
@@ -608,8 +608,8 @@ st.plotly_chart(fig_gender, use_container_width=True)
 # Assessment Scores by Gender
 st.subheader("1.7. Gender Performance in Assessments")
 merged_scores = pd.merge(
-    pd.merge(filtered_student_assessment, filtered_assessments, on='id_assessment'),
-    filtered_student_info[['id_student', 'gender']],
+    pd.merge(student_assessment, assessments, on='id_assessment'),
+    student_info[['id_student', 'gender']],
     on='id_student'
 ).copy()
 

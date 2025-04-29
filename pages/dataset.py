@@ -4,11 +4,11 @@ import pandas as pd
 from loader import courses, assessments, student_info, student_vle, student_assessment
 
 # Page configuration (MUST be first)
-# st.set_page_config(
-#     page_title="Dataset Explorer",
-#     page_icon="🔍",
-#     layout="wide"
-# )
+st.set_page_config(
+    page_title="Dataset Explorer",
+    page_icon="🔍",
+    layout="wide"
+)
 
 # Page Header
 st.title("🔍 Dataset Explorer")
