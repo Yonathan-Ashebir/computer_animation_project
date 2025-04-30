@@ -471,21 +471,6 @@ data.add_series("Count", result_counts['count'].tolist())
 story = Story(data=data)
 story.set_size("100%", "400px")  # Responsive width, fixed height
 
-# Custom style matching Streamlit aesthetics
-custom_style = Style({
-    "title": {"fontSize": "14px"},
-    "plot": {
-        "marker": {
-            "colorPalette": "#4CAF50 #2196F3 #FFC107 #F44336",  # Green, Blue, Yellow, Red
-            "label": {
-                "fontSize": "12px",
-                "color": "#333333"
-            }
-        },
-        "xAxis": {"label": {"fontSize": "12px", "angle": -45}},
-        "yAxis": {"label": {"fontSize": "12px"}}
-    }
-})
 
 # Slide 1: Base view - Result counts
 story.add_slide(
@@ -496,7 +481,7 @@ story.add_slide(
                 "y": "Count",
                 "title": "1. Overall Performance Distribution"
             }),
-            custom_style
+            # custom_style
         )
     )
 )
@@ -506,29 +491,27 @@ story.add_slide(
     Slide(
         Step(
             Config({
-                "x": "Result",
+                "x": ["Result", "Gender"],
                 "y": "Count",
                 "color": "Gender",
-                "split": True,
                 "title": "2. Split by Gender (M/F)"
             }),
-            custom_style
+            # custom_style
         )
     )
 )
 
-# Slide 3: Split by gender and age
+# # Slide 3: Split by gender and age
 story.add_slide(
     Slide(
         Step(
             Config({
-                "x": "Result",
-                "y": "Count",
-                "color": "Gender",
-                "split": "Age",
+                "x": ["Result", "Age"],
+                "y":  "Count",
+                "color": "Age",
                 "title": "3. Split by Gender & Age Groups"
             }),
-            custom_style
+            # custom_style
         )
     )
 )
@@ -542,6 +525,7 @@ components.html(
     height=450,  # Slightly taller than the chart to accommodate controls
     scrolling=False
 )
+
 
 # Add interpretation guide
 with st.expander("How to interpret this visualization", expanded=False):
@@ -1109,53 +1093,3 @@ fig_course.update_layout(
 )
 
 st.plotly_chart(fig_course, use_container_width=True)
-
-
-# import streamlit as st
-# import streamlit.components.v1 as components
-# from ipyvizzu import Data, Config
-# from ipyvizzustory import Story, Slide, Step
-
-# # Prepare data
-# data = Data()
-# data.add_series("Category", ["A", "B", "C"])
-# data.add_series("Value", [10, 20, 30])
-
-# # Create story
-# story = Story(data=data)
-# slide = Slide(Step(Config({"x": "Category", "y": "Value"})))
-# story.add_slide(slide)
-
-# # Export to HTML
-# html = story.to_html()
-
-# # Render in Streamlit
-# components.html(html, height=500, scrolling=True)
-
-# import streamlit as st
-# import streamlit.components.v1 as components
-# from ipyvizzu import Data, Config
-# from ipyvizzustory import Story, Slide, Step
-
-# # Prepare data
-# data = Data()
-# data.add_series("Category", ["A", "B", "C"])
-# data.add_series("Value", [10, 20, 30])
-
-# # Create story
-# story = Story(data=data)
-
-# # First step (your original)
-# slide1 = Slide(Step(Config({"x": "Category", "y": "Value"})))
-# story.add_slide(slide1)
-
-# # Second step (new - Pie chart)
-# slide2 = Slide(Step(Config({"angle": "Value", "geometry": "circle", "color": "Category"})))
-# story.add_slide(slide2)
-
-# # Export to HTML
-# html = story.to_html()
-
-# # Render in Streamlit
-# components.html(html, height=500, scrolling=True)
-

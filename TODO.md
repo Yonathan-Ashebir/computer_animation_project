@@ -1,7 +1,8 @@
 # TODO
-- Fix ipyvizzu story animated demo
+- Enhance the animated visualization
+- Fix high load issue (more critical than general performance)
 - a little project restructuring
-- ton of optimzation is needed
+- ton of optimization is needed
 - Why deployment crashes after few
 - clean up dependencies
 - Fix poetry deployment
