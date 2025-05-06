@@ -72,6 +72,15 @@ streamlit==1.22.0
 pandas==1.5.0
 plotly==5.11.0
 ```
+### Running the Application
+Easiest way is if you have `docker` ready:
+```bash
+docker run --rm -ti -p 0.0.0.0:8501:8501 yoniash/open_university_student_performance
+```
+Otherwise download the sources, follow the installation steps and then:
+```bash
+python -m streamlit run app.py
+```
 
 ### Installation
 1. Clone the repository:
@@ -92,11 +101,6 @@ The latter will install deployment dependencies only
 
 
 3. Place dataset files in `./data/` or let the app attempt automatic download
-
-### Running the Application
-```bash
-python -m streamlit run app.py
-```
 
 ## 🛠️ Technical Implementation
 
